@@ -1,28 +1,48 @@
 # 🗄️ TrafficIQ — Database Design
 
-This folder contains everything needed to set up, deploy, and seed the Firestore database for the TrafficIQ Smart Traffic Management System.
+This folder contains everything needed to set up, deploy, and seed the Firestore database for the **TrafficIQ Smart Traffic Management System**.
 
 > **Private database.** All collections are locked down — only authenticated admins and the backend (Admin SDK) can access data. Regular users and unauthenticated requests are fully blocked.
 
 ---
 
-## Collections Overview
+## 📦 Collections Overview
 
 ### `complaints`
+
 Stores road issue reports managed internally by the admin team.
 
-| Field | Type | Description |
-|---|---|---|
-| `id` | `string` | UUID v4 — document ID |
-| `type` | `string` | `Pothole` \| `Signal Malfunction` \| `Flooding` \| `Road Blockage` \| `Accident` \| `Construction` \| `Other` |
-| `description` | `string` | Free-text description of the issue |
-| `road_name` | `string?` | Road name (optional) |
-| `location` | `map` | `{ lat: number, lng: number, address: string }` |
-| `status` | `string` | `Open` \| `In Progress` \| `Resolved` \| `Closed` |
-| `timestamp` | `string` | ISO 8601 — when the complaint was created |
-| `updated_at` | `string` | ISO 8601 — when the status was last changed |
+| Field         | Type      | Description                                     |
+| ------------- | --------- | ----------------------------------------------- |
+| `id`          | `string`  | UUID v4 — document ID                           |
+| `type`        | `string`  | Scrollable list of allowed values (see below)   |
+| `description` | `string`  | Free-text description of the issue              |
+| `road_name`   | `string?` | Road name (optional)                            |
+| `location`    | `map`     | `{ lat: number, lng: number, address: string }` |
+| `status`      | `string`  | `Open` | `In Progress` | `Resolved` | `Closed`  |
+| `timestamp`   | `string`  | ISO 8601 — when the complaint was created       |
+| `updated_at`  | `string`  | ISO 8601 — when the status was last changed     |
 
-**Example document:**
+---
+
+## 🎯 Complaint Types (Scrollable)
+
+<div style="max-height: 180px; overflow-y: auto; padding: 12px; border: 1px solid #e5e7eb; border-radius: 12px; background: #fafafa;">
+
+* 🕳️ **Pothole**
+* 🚦 **Broken Signal**
+* 🌧️ **Water Logging**
+* 🚧 **Road Blockage**
+* 🏗️ **Construction Work**
+* 🚫 **Illegal Parking**
+* 📌 **Other**
+
+</div>
+
+---
+
+### 📄 Example Document
+
 ```json
 {
   "id": "a3f2c1d4-...",
@@ -42,21 +62,26 @@ Stores road issue reports managed internally by the admin team.
 
 ---
 
-### `traffic_data`
-Stores processed traffic density data per road. Document ID is the road name in snake_case (e.g. `anna_salai`).
+## 🚦 `traffic_data`
 
-| Field | Type | Description |
-|---|---|---|
-| `road_name` | `string` | Human-readable road name |
-| `congestion_level` | `number` | Score from `0` (free flow) to `100` (gridlock) |
-| `congestion_label` | `string` | `Low` \| `Medium` \| `High` |
-| `estimated_count` | `number` | Estimated number of vehicles on the road segment |
-| `travel_time` | `number?` | Travel time in minutes (from Google Maps Distance Matrix API) |
-| `signal_timing` | `map` | `{ greenTime, redTime, yellowTime, cycleTime }` in seconds |
-| `color` | `string` | Hex color for map marker (`#22c55e` / `#f59e0b` / `#ef4444`) |
-| `processed_at` | `string` | ISO 8601 — when this record was last updated |
+Stores processed traffic density data per road.
+Document ID is the road name in snake_case (e.g. `anna_salai`).
 
-**Example document:**
+| Field              | Type      | Description                                          |
+| ------------------ | --------- | ---------------------------------------------------- |
+| `road_name`        | `string`  | Human-readable road name                             |
+| `congestion_level` | `number`  | Score from `0` (free flow) to `100` (gridlock)       |
+| `congestion_label` | `string`  | `Low` | `Medium` | `High`                            |
+| `estimated_count`  | `number`  | Estimated number of vehicles                         |
+| `travel_time`      | `number?` | Travel time in minutes                               |
+| `signal_timing`    | `map`     | `{ greenTime, redTime, yellowTime, cycleTime }`      |
+| `color`            | `string`  | Map marker color (`#22c55e` / `#f59e0b` / `#ef4444`) |
+| `processed_at`     | `string`  | ISO 8601 timestamp                                   |
+
+---
+
+### 📄 Example Document
+
 ```json
 {
   "road_name": "Anna Salai",
@@ -77,84 +102,121 @@ Stores processed traffic density data per road. Document ID is the road name in 
 
 ---
 
-## Signal Timing Logic
+## ⚙️ Signal Timing Logic
 
-| Label | Congestion Score | Est. Vehicles | Green | Red | Yellow |
-|---|---|---|---|---|---|
-| Low | 0 – 33 | 10 – 80 | 30s | 60s | 5s |
-| Medium | 34 – 66 | 80 – 200 | 45s | 45s | 5s |
-| High | 67 – 100 | 200 – 400 | 70s | 20s | 5s |
-
----
-
-## Indexes
-
-| Collection | Fields |
-|---|---|
-| `complaints` | `type ASC` + `timestamp DESC` |
-| `complaints` | `status ASC` + `timestamp DESC` |
-| `complaints` | `road_name ASC` + `timestamp DESC` |
-| `traffic_data` | `congestion_level DESC` |
+| Label  | Congestion Score | Est. Vehicles | Green | Red | Yellow |
+| ------ | ---------------- | ------------- | ----- | --- | ------ |
+| Low    | 0 – 33           | 10 – 80       | 30s   | 60s | 5s     |
+| Medium | 34 – 66          | 80 – 200      | 45s   | 45s | 5s     |
+| High   | 67 – 100         | 200 – 400     | 70s   | 20s | 5s     |
 
 ---
 
-## Security Rules
+## 📊 Indexes
+
+| Collection     | Fields                             |
+| -------------- | ---------------------------------- |
+| `complaints`   | `type ASC` + `timestamp DESC`      |
+| `complaints`   | `status ASC` + `timestamp DESC`    |
+| `complaints`   | `road_name ASC` + `timestamp DESC` |
+| `traffic_data` | `congestion_level DESC`            |
+
+---
+
+## 🔐 Security Rules
 
 The database is **fully private — no public access.**
 
-| Who | Access |
-|---|---|
-| Unauthenticated users | Blocked entirely |
-| Authenticated regular users | Blocked entirely |
-| Authenticated admins (`admin: true` custom claim) | Full read + write |
-| Backend (Firebase Admin SDK) | Full access — bypasses all rules |
+| Who                         | Access                         |
+| --------------------------- | ------------------------------ |
+| Unauthenticated users       | ❌ Blocked                      |
+| Regular authenticated users | ❌ Blocked                      |
+| Admins (`admin: true`)      | ✅ Full read + write            |
+| Backend (Admin SDK)         | ✅ Full access (bypasses rules) |
 
-Access is granted only when **all three** conditions are true:
-1. The request is authenticated (`request.auth != null`)
-2. The account's email is verified (`email_verified == true`)
-3. The account has a custom `admin: true` claim set by you via the Admin SDK
+### ✅ Access Conditions
 
-### Setting the admin custom claim
+Access is granted only when:
 
-Run this once to promote a Firebase Auth user to admin:
-```js
-const admin = require('firebase-admin');
-await admin.auth().setCustomUserClaims('PASTE_USER_UID_HERE', { admin: true });
-```
-Get the `uid` from **Firebase Console → Authentication → Users**.
+1. `request.auth != null`
+2. `email_verified == true`
+3. `admin: true` custom claim exists
 
 ---
 
-## Setup & Deployment
+### 👑 Set Admin Role
+
+Run this once to promote a Firebase user:
+
+```js
+const admin = require('firebase-admin');
+
+await admin.auth().setCustomUserClaims('PASTE_USER_UID_HERE', {
+  admin: true
+});
+```
+
+Get UID from:
+**Firebase Console → Authentication → Users**
+
+---
+
+## 🚀 Setup & Deployment
 
 ```bash
-# 1. Install
+# 1. Install dependencies
 npm install
 
 # 2. Add credentials
-cp .env.example .env   # fill in Firebase service account values
+cp .env.example .env
 
 # 3. Seed sample data
 npm run seed
 
-# 4. Deploy rules + indexes
+# 4. Install Firebase CLI
 npm install -g firebase-tools
+
+# 5. Login
 firebase login
+
+# 6. Select project
 firebase use your-project-id
+
+# 7. Deploy everything
 npm run deploy:all
 ```
 
 ---
 
-## File Structure
+## 📁 File Structure
 
 ```
 database-design/
-├── firestore.rules          # Security rules — admin-only access
-├── firestore.indexes.json   # Composite index definitions
-├── firebase.json            # Links rules + indexes for firebase deploy
-├── seed.js                  # Populates both collections with sample data
-├── package.json             # Dependencies + npm scripts
-├── .env.example             # Firebase credentials template
-└── README.md                # This file
+├── firestore.rules
+├── firestore.indexes.json
+├── firebase.json
+├── seed.js
+├── package.json
+├── .env.example
+└── README.md
 ```
+
+---
+
+## 💡 Notes
+
+* Complaint types are standardized and non-overlapping
+* Scrollable UI improves readability
+* Fully admin-controlled secure system
+* Designed for scalability and future AI integration
+
+---
+
+## 🧠 Future Improvements
+
+* 📸 Image uploads for complaints
+* 🤖 AI-based congestion prediction
+* 🔔 Real-time alerts system
+* 🗺️ Google Maps API integration
+
+---
