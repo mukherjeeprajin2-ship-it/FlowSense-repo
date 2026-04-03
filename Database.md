@@ -29,10 +29,8 @@ Stores road issue reports managed internally by the admin team.
 
 <div style="max-height: 180px; overflow-y: auto; padding: 12px; border: 1px solid #e5e7eb; border-radius: 12px; background: #fafafa;">
 
-* 🕳️ **Pothole**
 * 🚦 **Broken Signal**
 * 🌧️ **Water Logging**
-* 🚧 **Road Blockage**
 * 🏗️ **Construction Work**
 * 🚫 **Illegal Parking**
 * 📌 **Other**
