@@ -39,7 +39,3 @@ We built a platform that:
 - 📊 Traffic density and congestion dashboard  
 - 🚦 Signal timing recommendation system  
 - 📍 Location-based data visualization  
-
----
-
-## 🏗️ Project Structure# FlowSense-repo
